@@ -1,0 +1,116 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String?
+  companies Company[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Company {
+  id           String        @id @default(uuid())
+  name         String
+  cnpj         String?       @unique
+  userId       String
+  user         User          @relation(fields: [userId], references: [id])
+  transactions Transaction[]
+  categories   Category[]
+  goals        Goal[]
+  costCenters  CostCenter[]
+  assets       Asset[]
+  recurringTransactions RecurringTransaction[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model Asset {
+  id           String        @id @default(uuid())
+  name         String
+  value        Float
+  type         String        // BEM (Máquina, Veículo) ou DIVIDA (Empréstimo longo)
+  purchaseDate DateTime?
+  companyId    String
+  company      Company       @relation(fields: [companyId], references: [id])
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model RecurringTransaction {
+  id            String   @id @default(uuid())
+  description   String
+  amount        Float
+  type          String   // INCOME or EXPENSE
+  frequency     String   // MONTHLY, WEEKLY
+  dayOfMonth    Int?
+  categoryId    String
+  companyId     String
+  company       Company  @relation(fields: [companyId], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Category {
+  id           String        @id @default(uuid())
+  name         String
+  type         String        // INCOME or EXPENSE
+  companyId    String
+  company      Company       @relation(fields: [companyId], references: [id])
+  parentId     String?
+  parent       Category?     @relation("SubCategories", fields: [parentId], references: [id])
+  children     Category[]    @relation("SubCategories")
+  transactions Transaction[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model CostCenter {
+  id           String        @id @default(uuid())
+  name         String
+  companyId    String
+  company      Company       @relation(fields: [companyId], references: [id])
+  transactions Transaction[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model Transaction {
+  id            String   @id @default(uuid())
+  description   String
+  amount        Float
+  date          DateTime
+  type          String   // INCOME or EXPENSE
+  status        String   @default("PAID") // PAID, PENDING
+  categoryId    String
+  category      Category @relation(fields: [categoryId], references: [id])
+  companyId     String
+  company       Company  @relation(fields: [companyId], references: [id])
+  costCenterId  String?
+  costCenter    CostCenter? @relation(fields: [costCenterId], references: [id])
+  paymentDate   DateTime?
+  dueDate       DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Goal {
+  id          String   @id @default(uuid())
+  description String
+  type        String   @default("ECONOMY") // ECONOMY, INVESTMENT, DEBT
+  targetValue Float
+  currentValue Float    @default(0)
+  deadline    DateTime?
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

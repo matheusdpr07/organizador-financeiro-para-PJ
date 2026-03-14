@@ -1,0 +1,51 @@
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import Sidebar from './components/Sidebar';
+import Dashboard from './pages/Dashboard';
+import DRE from './pages/DRE';
+import CashFlow from './pages/CashFlow';
+import Bills from './pages/Bills';
+import Login from './pages/Login';
+
+const ProtectedLayout = ({ children }: { children: React.ReactNode }) => {
+  const { signed, loading } = useAuth();
+
+  if (loading) return (
+    <div className="flex items-center justify-center min-h-screen bg-slate-50">
+      <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+    </div>
+  );
+
+  if (!signed) return <Navigate to="/login" />;
+
+  return (
+    <div className="flex min-h-screen bg-gray-50">
+      <Sidebar />
+      <main className="flex-1 overflow-auto">
+        {children}
+      </main>
+    </div>
+  );
+};
+
+function App() {
+  return (
+    <AuthProvider>
+      <Router>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          
+          <Route path="/" element={<ProtectedLayout><Dashboard /></ProtectedLayout>} />
+          <Route path="/dre" element={<ProtectedLayout><DRE /></ProtectedLayout>} />
+          <Route path="/cash-flow" element={<ProtectedLayout><CashFlow /></ProtectedLayout>} />
+          <Route path="/bills" element={<ProtectedLayout><Bills /></ProtectedLayout>} />
+          <Route path="/goals" element={<ProtectedLayout><div className="p-8">Página de Metas em construção...</div></ProtectedLayout>} />
+          
+          <Route path="*" element={<Navigate to="/" />} />
+        </Routes>
+      </Router>
+    </AuthProvider>
+  )
+}
+
+export default App;
