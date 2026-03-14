@@ -11,7 +11,10 @@ import {
   TrendingUp,
   Building2,
   Clock,
-  Settings
+  Settings,
+  Wrench,
+  Users,
+  Package
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -21,6 +24,9 @@ const Sidebar = () => {
 
   const menuItems = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
+    { icon: Wrench, label: 'Ordens de Serviço', path: '/services' },
+    { icon: Users, label: 'Clientes', path: '/clients' },
+    { icon: Package, label: 'Estoque de Peças', path: '/inventory' },
     { icon: FileText, label: 'DRE', path: '/dre' },
     { icon: Calendar, label: 'Fluxo de Caixa', path: '/cash-flow' },
     { icon: Clock, label: 'Contas Pagar/Rec', path: '/bills' },
@@ -29,7 +35,6 @@ const Sidebar = () => {
 
   return (
     <div className="w-64 bg-white border-r border-slate-100 min-h-screen flex flex-col sticky top-0 h-screen overflow-hidden">
-      {/* Brand Section */}
       <div className="p-6">
         <div className="flex items-center gap-3 text-brand-600">
           <div className="p-2 bg-brand-600 rounded-xl text-white shadow-lg shadow-brand-100">
@@ -39,9 +44,8 @@ const Sidebar = () => {
         </div>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 px-4 py-4 space-y-1">
-        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-2 mb-4">Gerenciamento</p>
+      <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
+        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-2 mb-4">Oficina & Loja</p>
         {menuItems.map((item) => {
           const isActive = location.pathname === item.path;
           return (
@@ -55,7 +59,7 @@ const Sidebar = () => {
               }`}
             >
               <div className="flex items-center gap-3">
-                <item.icon size={18} className={isActive ? 'text-brand-600' : 'text-slate-400 group-hover:text-slate-600'} />
+                <item.icon size={18} className={isActive ? 'text-brand-600' : 'text-slate-400 group-hover:text-brand-600'} />
                 <span className="text-[13px] font-bold">{item.label}</span>
               </div>
               {isActive && <div className="w-1 h-4 bg-brand-600 rounded-full"></div>}
@@ -64,7 +68,6 @@ const Sidebar = () => {
         })}
       </nav>
 
-      {/* Profile & Footer */}
       <div className="p-4 border-t border-slate-50 space-y-2">
         <div className="bg-slate-50 rounded-2xl p-3 flex items-center gap-3 group border border-transparent hover:border-slate-200 transition-all cursor-pointer">
           <div className="h-9 w-9 bg-white rounded-lg flex items-center justify-center text-brand-600 border border-slate-200 shadow-sm font-black text-sm">

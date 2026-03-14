@@ -21,27 +21,32 @@ export const getDRE = async (req: AuthRequest, res: Response) => {
       where: {
         companyId,
         status: 'PAID',
-        date: {
-          gte: startDate,
-          lte: endDate,
-        },
+        date: { gte: startDate, lte: endDate },
       },
-      include: {
-        category: true,
-      },
+      include: { category: true },
     });
 
-    const dre = {
-      grossRevenue: transactions.filter(t => t.type === 'INCOME').reduce((acc, t) => acc + t.amount, 0),
-      variableCosts: transactions.filter(t => t.type === 'EXPENSE' && t.category.name.toLowerCase().includes('custo')).reduce((acc, t) => acc + t.amount, 0),
-      fixedExpenses: transactions.filter(t => t.type === 'EXPENSE' && !t.category.name.toLowerCase().includes('custo')).reduce((acc, t) => acc + t.amount, 0),
+    const getSum = (nature: string) => 
+      transactions.filter(t => t.category.accountingNature === nature).reduce((acc, t) => acc + t.amount, 0);
+
+    const data = {
+      grossRevenue: getSum('REVENUE'),
+      deductions: getSum('DEDUCTION'),
+      directCosts: getSum('DIRECT_COST'),
+      operatingExpenses: getSum('OPERATING_EXPENSE'),
+      financialResult: getSum('FINANCIAL'), // Aqui pode ser positivo ou negativo
     };
 
-    const netProfit = dre.grossRevenue - dre.variableCosts - dre.fixedExpenses;
+    const netRevenue = data.grossRevenue - data.deductions;
+    const grossProfit = netRevenue - data.directCosts;
+    const ebitda = grossProfit - data.operatingExpenses;
+    const netProfit = ebitda - data.financialResult; // Simplificado
 
     res.json({
-      ...dre,
-      grossProfit: dre.grossRevenue - dre.variableCosts,
+      ...data,
+      netRevenue,
+      grossProfit,
+      ebitda,
       netProfit,
     });
   } catch (error) {
@@ -64,10 +69,7 @@ export const getCashFlow = async (req: AuthRequest, res: Response) => {
     const transactions = await prisma.transaction.findMany({
       where: {
         companyId,
-        date: {
-          gte: startDate,
-          lte: endDate,
-        },
+        date: { gte: startDate, lte: endDate },
       },
     });
 

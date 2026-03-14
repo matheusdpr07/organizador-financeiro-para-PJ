@@ -6,35 +6,44 @@ async function main() {
   const companyId = 'demo-company-id';
 
   const categories = [
-    // VENDAS / ENTRADAS (INCOME)
-    { name: 'Venda de Mercadorias', type: 'INCOME' },
-    { name: 'Prestação de Serviços', type: 'INCOME' },
-    { name: 'Recebimento de Cartão', type: 'INCOME' },
-    { name: 'Outras Receitas', type: 'INCOME' },
+    // VENDAS / ENTRADAS (REVENUE)
+    { name: 'Venda de Mercadorias', type: 'INCOME', accountingNature: 'REVENUE' },
+    { name: 'Prestação de Serviços', type: 'INCOME', accountingNature: 'REVENUE' },
+    { name: 'Recebimento de Cartão', type: 'INCOME', accountingNature: 'REVENUE' },
+    { name: 'Outras Receitas', type: 'INCOME', accountingNature: 'REVENUE' },
+    { name: 'Rendimentos Financeiros', type: 'INCOME', accountingNature: 'FINANCIAL' },
     
-    // COMPRAS / SAÍDAS (EXPENSE)
-    { name: 'Compra de Estoque', type: 'EXPENSE' },
-    { name: 'Pagamento de Fornecedores', type: 'EXPENSE' },
-    { name: 'Fretes e Logística', type: 'EXPENSE' },
-    { name: 'Embalagens', type: 'EXPENSE' },
-    { name: 'Aluguel do Ponto', type: 'EXPENSE' },
-    { name: 'Energia / Água / Internet', type: 'EXPENSE' },
-    { name: 'Folha de Pagamento', type: 'EXPENSE' },
-    { name: 'Impostos e Taxas', type: 'EXPENSE' },
-    { name: 'Marketing e Anúncios', type: 'EXPENSE' },
+    // COMPRAS / SAÍDAS (CLASSIFICADAS)
+    { name: 'Impostos sobre Vendas (DAS/ISS)', type: 'EXPENSE', accountingNature: 'DEDUCTION' },
+    { name: 'Compra de Estoque / CMV', type: 'EXPENSE', accountingNature: 'DIRECT_COST' },
+    { name: 'Pagamento de Fornecedores', type: 'EXPENSE', accountingNature: 'DIRECT_COST' },
+    { name: 'Fretes sobre Vendas', type: 'EXPENSE', accountingNature: 'DIRECT_COST' },
+    
+    // OPERACIONAIS (FIXAS)
+    { name: 'Embalagens', type: 'EXPENSE', accountingNature: 'OPERATING_EXPENSE' },
+    { name: 'Aluguel do Ponto', type: 'EXPENSE', accountingNature: 'OPERATING_EXPENSE' },
+    { name: 'Energia / Água / Internet', type: 'EXPENSE', accountingNature: 'OPERATING_EXPENSE' },
+    { name: 'Folha de Pagamento', type: 'EXPENSE', accountingNature: 'OPERATING_EXPENSE' },
+    { name: 'Contabilidade', type: 'EXPENSE', accountingNature: 'OPERATING_EXPENSE' },
+    { name: 'Software / Assinaturas', type: 'EXPENSE', accountingNature: 'OPERATING_EXPENSE' },
+    { name: 'Marketing e Anúncios', type: 'EXPENSE', accountingNature: 'OPERATING_EXPENSE' },
+    
+    // FINANCEIRAS
+    { name: 'Tarifas Bancárias', type: 'EXPENSE', accountingNature: 'FINANCIAL' },
+    { name: 'Juros de Empréstimos', type: 'EXPENSE', accountingNature: 'FINANCIAL' },
   ];
 
   for (const cat of categories) {
     await prisma.category.upsert({
       where: { 
-        id: (await prisma.category.findFirst({ where: { name: cat.name, companyId } }))?.id || 'comm-' + cat.name
+        id: (await prisma.category.findFirst({ where: { name: cat.name, companyId } }))?.id || 'prof-' + cat.name
       },
-      update: { type: cat.type },
+      update: { accountingNature: cat.accountingNature, type: cat.type },
       create: { ...cat, companyId }
     });
   }
 
-  console.log('Categorias de COMÉRCIO sincronizadas com sucesso!');
+  console.log('Categorias PROFISSIONAIS sincronizadas com sucesso!');
 }
 
 main()

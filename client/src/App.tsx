@@ -6,13 +6,16 @@ import DRE from './pages/DRE';
 import CashFlow from './pages/CashFlow';
 import Bills from './pages/Bills';
 import Login from './pages/Login';
+import Services from './pages/Services';
+import Clients from './pages/Clients';
+import Inventory from './pages/Inventory';
 
 const ProtectedLayout = ({ children }: { children: React.ReactNode }) => {
   const { signed, loading } = useAuth();
 
   if (loading) return (
     <div className="flex items-center justify-center min-h-screen bg-slate-50">
-      <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+      <div className="w-12 h-12 border-4 border-brand-600 border-t-transparent rounded-full animate-spin"></div>
     </div>
   );
 
@@ -39,6 +42,9 @@ function App() {
           <Route path="/dre" element={<ProtectedLayout><DRE /></ProtectedLayout>} />
           <Route path="/cash-flow" element={<ProtectedLayout><CashFlow /></ProtectedLayout>} />
           <Route path="/bills" element={<ProtectedLayout><Bills /></ProtectedLayout>} />
+          <Route path="/services" element={<ProtectedLayout><Services /></ProtectedLayout>} />
+          <Route path="/clients" element={<ProtectedLayout><Clients /></ProtectedLayout>} />
+          <Route path="/inventory" element={<ProtectedLayout><Inventory /></ProtectedLayout>} />
           <Route path="/goals" element={<ProtectedLayout><div className="p-8">Página de Metas em construção...</div></ProtectedLayout>} />
           
           <Route path="*" element={<Navigate to="/" />} />

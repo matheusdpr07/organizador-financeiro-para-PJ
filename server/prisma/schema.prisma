@@ -29,8 +29,66 @@ model Company {
   costCenters  CostCenter[]
   assets       Asset[]
   recurringTransactions RecurringTransaction[]
+  clients      Client[]
+  serviceOrders ServiceOrder[]
+  products     Product[]
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
+}
+
+model Product {
+  id           String   @id @default(uuid())
+  name         String
+  sku          String?  // Código da Peça
+  quantity     Float    @default(0)
+  costPrice    Float    @default(0)
+  salePrice    Float    @default(0)
+  companyId    String
+  company      Company  @relation(fields: [companyId], references: [id])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Client {
+  id           String        @id @default(uuid())
+  name         String
+  document     String?       // CPF/CNPJ
+  phone        String?
+  email        String?
+  address      String?
+  observation  String?       // Ex: Placa do Veículo
+  companyId    String
+  company      Company       @relation(fields: [companyId], references: [id])
+  serviceOrders ServiceOrder[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model ServiceOrder {
+  id           Int           @id @default(autoincrement())
+  status       String        @default("OPEN") // OPEN, IN_PROGRESS, DONE, PAID, CANCELLED
+  description  String?
+  totalAmount  Float         @default(0)
+  clientId     String
+  client       Client        @relation(fields: [clientId], references: [id])
+  companyId    String
+  company      Company       @relation(fields: [companyId], references: [id])
+  items        ServiceItem[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model ServiceItem {
+  id             String       @id @default(uuid())
+  description    String
+  quantity       Float        @default(1)
+  unitPrice      Float
+  totalPrice     Float
+  type           String       @default("SERVICE") // SERVICE or PART
+  serviceOrderId Int
+  serviceOrder   ServiceOrder @relation(fields: [serviceOrderId], references: [id])
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
 }
 
 model Asset {
@@ -60,17 +118,18 @@ model RecurringTransaction {
 }
 
 model Category {
-  id           String        @id @default(uuid())
-  name         String
-  type         String        // INCOME or EXPENSE
-  companyId    String
-  company      Company       @relation(fields: [companyId], references: [id])
-  parentId     String?
-  parent       Category?     @relation("SubCategories", fields: [parentId], references: [id])
-  children     Category[]    @relation("SubCategories")
-  transactions Transaction[]
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  id               String        @id @default(uuid())
+  name             String
+  type             String        // INCOME or EXPENSE
+  accountingNature String        @default("OPERATING_EXPENSE") // REVENUE, DEDUCTION, DIRECT_COST, OPERATING_EXPENSE, FINANCIAL
+  companyId        String
+  company          Company       @relation(fields: [companyId], references: [id])
+  parentId         String?
+  parent           Category?     @relation("SubCategories", fields: [parentId], references: [id])
+  children         Category[]    @relation("SubCategories")
+  transactions     Transaction[]
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
 }
 
 model CostCenter {
