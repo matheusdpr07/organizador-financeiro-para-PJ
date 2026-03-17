@@ -1,135 +1,108 @@
-import React, { useEffect, useState } from 'react';
-import { Plus, Users, Search, Edit2, Trash2, Phone, Mail, CarFront, MapPin } from 'lucide-react';
-import api from '../services/api';
+import React, { useState } from 'react';
+import { Users, Plus, Edit2, Trash2, Search, Phone, Mail, MapPin } from 'lucide-react';
 import ClientModal from '../components/ClientModal';
+import { useClients, useDeleteClient } from '../hooks/useClients';
+import { Client } from '../types';
 
 const Clients = () => {
-  const [clients, setClients] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingClient, setEditingClient] = useState(null);
+  const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
-  const fetchClients = async () => {
-    try {
-      const res = await api.get('/services/clients');
-      setClients(res.data);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data: clients = [], isLoading } = useClients();
+  const deleteMutation = useDeleteClient();
 
-  useEffect(() => { fetchClients(); }, []);
+  const handleEdit = (client: Client) => {
+    setEditingClient(client);
+    setIsModalOpen(true);
+  };
 
   const handleDelete = async (id: string) => {
-    if (confirm("Tem certeza que deseja remover este cliente?")) {
-      try {
-        await api.delete(`/services/clients/${id}`);
-        fetchClients();
-      } catch (err) {
-        alert("Erro ao excluir cliente");
-      }
+    if (confirm("Deseja realmente excluir este cliente?")) {
+      deleteMutation.mutate(id);
     }
   };
 
-  const filteredClients = clients.filter((c: any) => 
-    c.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    (c.observation && c.observation.toLowerCase().includes(searchTerm.toLowerCase()))
+  const filteredClients = clients.filter(c => 
+    c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (c.document && c.document.includes(searchTerm))
   );
 
-  if (loading) return (
-    <div className="flex items-center justify-center min-h-screen bg-slate-50/30">
-      <div className="w-10 h-10 border-[3px] border-brand-600 border-t-transparent rounded-full animate-spin"></div>
-    </div>
-  );
+  if (isLoading) return <div className="p-8 text-center font-bold text-slate-500 animate-pulse">Carregando clientes...</div>;
 
   return (
-    <div className="p-6 md:p-10 bg-slate-50/50 min-h-screen space-y-10">
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+    <div className="p-4 md:p-8 bg-slate-50 min-h-screen">
+      <header className="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <div className="flex items-center gap-2 text-brand-600 mb-2">
-            <Users size={16} />
-            <span className="text-[10px] font-black uppercase tracking-widest">Base de Contatos</span>
-          </div>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight">Gestão de Clientes</h1>
-          <p className="text-slate-500 text-sm font-medium">Cadastre e gerencie os proprietários e seus veículos.</p>
+          <h1 className="text-3xl font-black text-slate-900 flex items-center gap-3 tracking-tight">
+            <Users className="text-brand-600" size={32} />
+            Meus Clientes
+          </h1>
+          <p className="text-slate-500 font-medium">Gestão e histórico de contatos.</p>
         </div>
         
-        <div className="flex items-center gap-3">
-          <div className="relative group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-brand-600 transition-colors" size={18} />
-            <input 
-              className="pl-12 pr-6 py-3 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-brand-600/10 focus:border-brand-600 transition-all text-sm font-bold w-64 shadow-sm"
-              placeholder="Buscar por nome ou placa..."
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-            />
-          </div>
-          <button 
-            onClick={() => { setEditingClient(null); setIsModalOpen(true); }}
-            className="flex items-center gap-2 bg-brand-600 px-6 py-3 rounded-2xl hover:bg-brand-700 transition-all font-bold text-sm text-white shadow-xl shadow-brand-100 active:scale-95"
-          >
-            <Plus size={18} /> Novo Cliente
-          </button>
-        </div>
+        <button 
+          onClick={() => { setEditingClient(null); setIsModalOpen(true); }}
+          className="bg-brand-600 text-white px-8 py-4 rounded-2xl font-black text-sm hover:bg-brand-700 transition-all shadow-xl shadow-brand-100 flex items-center gap-2 active:scale-95"
+        >
+          <Plus size={20} /> Adicionar Cliente
+        </button>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        {filteredClients.map((client: any) => (
-          <div key={client.id} className="bg-white p-8 rounded-[32px] shadow-card border border-slate-100 group hover:border-brand-100 transition-all relative overflow-hidden">
-            <div className="flex flex-col h-full justify-between gap-6">
-              <div className="space-y-4">
-                <div className="flex justify-between items-start">
-                  <div className="h-14 w-14 bg-brand-50 text-brand-600 rounded-2xl flex items-center justify-center font-black text-xl border border-brand-100/50 shadow-sm">
-                    {client.name[0]}
-                  </div>
-                  <div className="flex gap-1">
-                    <button onClick={() => { setEditingClient(client); setIsModalOpen(true); }} className="p-2 text-slate-300 hover:text-brand-600 hover:bg-brand-50 rounded-xl transition-all">
-                      <Edit2 size={16} />
-                    </button>
-                    <button onClick={() => handleDelete(client.id)} className="p-2 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all">
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                </div>
+      <div className="bg-white p-6 rounded-[32px] shadow-card border border-slate-100 mb-8 flex items-center gap-4">
+        <Search className="text-slate-400" size={20} />
+        <input 
+          type="text" 
+          placeholder="Buscar por nome ou CPF/CNPJ..."
+          className="flex-1 bg-transparent border-none focus:outline-none font-bold text-slate-900 placeholder:text-slate-300"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+      </div>
 
-                <div>
-                  <h3 className="text-slate-900 font-black text-xl truncate">{client.name}</h3>
-                  <div className="flex items-center gap-2 mt-1 text-emerald-600">
-                    <CarFront size={14} />
-                    <span className="text-[11px] font-black uppercase tracking-widest">{client.observation || 'VEÍCULO NÃO INFORMADO'}</span>
-                  </div>
-                </div>
-
-                <div className="space-y-2.5 pt-2">
-                  <div className="flex items-center gap-3 text-slate-500">
-                    <Phone size={14} className="text-slate-300" />
-                    <span className="text-xs font-bold">{client.phone || '(00) 00000-0000'}</span>
-                  </div>
-                  <div className="flex items-center gap-3 text-slate-500">
-                    <Mail size={14} className="text-slate-300" />
-                    <span className="text-xs font-bold truncate">{client.email || 'cliente@sem-email.com'}</span>
-                  </div>
-                  <div className="flex items-center gap-3 text-slate-500">
-                    <MapPin size={14} className="text-slate-300" />
-                    <span className="text-xs font-bold truncate">{client.address || 'Endereço não cadastrado'}</span>
-                  </div>
-                </div>
-              </div>
-
-              <button className="w-full py-3 bg-slate-50 text-slate-400 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-brand-600 hover:text-white transition-all group-hover:shadow-lg group-hover:shadow-brand-100">
-                Ver Histórico de Serviços
-              </button>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filteredClients.map((client) => (
+          <div key={client.id} className="bg-white p-8 rounded-[32px] shadow-card border border-slate-100 hover:border-brand-200 transition-all group relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+              <button onClick={() => handleEdit(client)} className="p-2 bg-slate-50 text-slate-400 hover:text-brand-600 rounded-xl transition-all"><Edit2 size={16} /></button>
+              <button onClick={() => handleDelete(client.id)} className="p-2 bg-slate-50 text-slate-400 hover:text-rose-600 rounded-xl transition-all"><Trash2 size={16} /></button>
             </div>
+
+            <div className="mb-6">
+              <div className="w-12 h-12 bg-brand-50 text-brand-600 rounded-2xl flex items-center justify-center font-black text-xl mb-4">
+                {client.name.charAt(0)}
+              </div>
+              <h3 className="text-lg font-black text-slate-900 mb-1">{client.name}</h3>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{client.document || 'CPF/CNPJ NÃO INFORMADO'}</p>
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-center gap-3 text-slate-600 text-sm font-medium">
+                <Phone size={14} className="text-slate-400" />
+                {client.phone || '(00) 00000-0000'}
+              </div>
+              <div className="flex items-center gap-3 text-slate-600 text-sm font-medium">
+                <Mail size={14} className="text-slate-400" />
+                <span className="truncate">{client.email || 'E-mail não cadastrado'}</span>
+              </div>
+              <div className="flex items-center gap-3 text-slate-600 text-sm font-medium">
+                <MapPin size={14} className="text-slate-400" />
+                <span className="truncate">{client.address || 'Endereço não informado'}</span>
+              </div>
+            </div>
+
+            {client.observation && (
+              <div className="mt-6 pt-6 border-t border-slate-50">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Observação / Veículo</p>
+                <p className="text-xs text-slate-600 font-bold">{client.observation}</p>
+              </div>
+            )}
           </div>
         ))}
 
         {filteredClients.length === 0 && (
-          <div className="col-span-full py-24 bg-white rounded-[40px] border border-dashed border-slate-200 flex flex-col items-center justify-center text-slate-300 gap-4">
-            <Users size={48} className="opacity-20" />
-            <p className="font-bold uppercase text-[10px] tracking-[0.2em]">Nenhum cliente encontrado</p>
+          <div className="col-span-full py-20 text-center text-slate-300 font-bold italic">
+            Nenhum cliente encontrado.
           </div>
         )}
       </div>
@@ -137,8 +110,7 @@ const Clients = () => {
       <ClientModal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
-        onSuccess={fetchClients} 
-        initialData={editingClient}
+        initialData={editingClient} 
       />
     </div>
   );

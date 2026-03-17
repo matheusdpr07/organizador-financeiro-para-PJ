@@ -1,49 +1,24 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell 
 } from 'recharts';
 import { 
   TrendingUp, TrendingDown, DollarSign, Plus, Edit2, Trash2, RefreshCcw, ArrowRight, FileDown, Table
 } from 'lucide-react';
-import api from '../services/api';
 import { formatCurrency, formatDate } from '../utils/formatters';
 import { exportToExcel, exportToPDF } from '../utils/exportUtils';
 import TransactionModal from '../components/TransactionModal';
 import { useAuth } from '../contexts/AuthContext';
-
-interface Transaction {
-  id: string;
-  description: string;
-  amount: number;
-  type: 'INCOME' | 'EXPENSE';
-  date: string;
-  categoryId: string;
-  costCenterId: string | null;
-  status: 'PAID' | 'PENDING';
-  category: { name: string };
-}
+import { useTransactions, useDeleteTransaction } from '../hooks/useTransactions';
+import { Transaction } from '../types';
 
 const Dashboard = () => {
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const { user } = useAuth();
 
-  const fetchData = async () => {
-    try {
-      const response = await api.get('/transactions');
-      setTransactions(response.data);
-    } catch (error) {
-      console.error("Erro ao buscar dados:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchData();
-  }, []);
+  const { data: transactions = [], isLoading } = useTransactions();
+  const deleteMutation = useDeleteTransaction();
 
   const handleEditClick = (transaction: Transaction) => {
     setEditingTransaction(transaction);
@@ -52,23 +27,7 @@ const Dashboard = () => {
 
   const handleDelete = async (id: string) => {
     if (confirm("Tem certeza que deseja excluir este lançamento?")) {
-      try {
-        await api.delete(`/transactions/${id}`);
-        fetchData();
-      } catch (error) {
-        alert("Erro ao excluir transação");
-      }
-    }
-  };
-
-  const handleClearAll = async () => {
-    if (confirm("ATENÇÃO: Isso apagará TODO o seu histórico. Deseja continuar?")) {
-      try {
-        await api.delete('/transactions/clear');
-        fetchData();
-      } catch (error) {
-        alert("Erro ao zerar histórico");
-      }
+      deleteMutation.mutate(id);
     }
   };
 
@@ -80,16 +39,23 @@ const Dashboard = () => {
     exportToExcel(transactions, `Extrato_${new Date().toLocaleDateString('pt-BR')}`);
   };
 
-  const totalIncome = transactions.filter(t => t.type === 'INCOME' && t.status === 'PAID').reduce((acc, t) => acc + t.amount, 0);
-  const totalExpense = transactions.filter(t => t.type === 'EXPENSE' && t.status === 'PAID').reduce((acc, t) => acc + t.amount, 0);
-  const balance = totalIncome - totalExpense;
+  // Memoização de cálculos para performance
+  const stats = useMemo(() => {
+    const income = transactions.filter(t => t.type === 'INCOME' && t.status === 'PAID').reduce((acc, t) => acc + t.amount, 0);
+    const expense = transactions.filter(t => t.type === 'EXPENSE' && t.status === 'PAID').reduce((acc, t) => acc + t.amount, 0);
+    return {
+      totalIncome: income,
+      totalExpense: expense,
+      balance: income - expense
+    };
+  }, [transactions]);
 
-  const chartData = [
-    { name: 'Vendas', valor: totalIncome },
-    { name: 'Compras', valor: totalExpense },
-  ];
+  const chartData = useMemo(() => [
+    { name: 'Vendas', valor: stats.totalIncome },
+    { name: 'Compras', valor: stats.totalExpense },
+  ], [stats]);
 
-  if (loading) return (
+  if (isLoading) return (
     <div className="flex items-center justify-center min-h-screen bg-slate-50/30">
       <div className="w-10 h-10 border-[3px] border-brand-600 border-t-transparent rounded-full animate-spin"></div>
     </div>
@@ -104,9 +70,6 @@ const Dashboard = () => {
         </div>
         
         <div className="flex items-center gap-3">
-          <button onClick={handleClearAll} className="p-3 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all" title="Zerar Histórico">
-            <RefreshCcw size={20} />
-          </button>
           <div className="h-8 w-[1px] bg-slate-200 mx-2"></div>
           <button 
             onClick={() => { setEditingTransaction(null); setIsModalOpen(true); }}
@@ -118,9 +81,9 @@ const Dashboard = () => {
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <StatCard title="Total Entradas" value={totalIncome} type="income" label="Vendas" icon={<TrendingUp size={20} />} />
-        <StatCard title="Total Saídas" value={totalExpense} type="expense" label="Compras" icon={<TrendingDown size={20} />} />
-        <StatCard title="Em Caixa" value={balance} type="balance" label="Saldo Real" icon={<DollarSign size={20} />} />
+        <StatCard title="Total Entradas" value={stats.totalIncome} type="income" label="Vendas" icon={<TrendingUp size={20} />} />
+        <StatCard title="Total Saídas" value={stats.totalExpense} type="expense" label="Compras" icon={<TrendingDown size={20} />} />
+        <StatCard title="Em Caixa" value={stats.balance} type="balance" label="Saldo Real" icon={<DollarSign size={20} />} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -148,7 +111,7 @@ const Dashboard = () => {
               <TrendingUp size={24} />
             </div>
             <h3 className="text-xl font-black text-white mb-2">Desempenho Comercial</h3>
-            <p className="text-slate-400 text-sm font-medium leading-relaxed">Resultado comercial {balance >= 0 ? 'positivo' : 'abaixo do esperado'}.</p>
+            <p className="text-slate-400 text-sm font-medium leading-relaxed">Resultado comercial {stats.balance >= 0 ? 'positivo' : 'abaixo do esperado'}.</p>
           </div>
           <button className="flex items-center gap-2 text-brand-400 font-bold text-sm hover:text-white transition-all group mt-6 relative z-10">
             Análise detalhada DRE <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
@@ -195,7 +158,7 @@ const Dashboard = () => {
                     </div>
                   </td>
                   <td className="px-8 py-5">
-                    <span className="px-2.5 py-1 bg-slate-100 text-slate-500 rounded-lg font-bold text-[10px] uppercase">{t.category.name}</span>
+                    <span className="px-2.5 py-1 bg-slate-100 text-slate-500 rounded-lg font-bold text-[10px] uppercase">{t.category?.name}</span>
                   </td>
                   <td className="px-8 py-5 text-center">
                     <div className={`mx-auto w-2 h-2 rounded-full ${t.status === 'PAID' ? 'bg-emerald-500' : 'bg-amber-500'}`}></div>
@@ -216,7 +179,7 @@ const Dashboard = () => {
         </div>
       </div>
 
-      <TransactionModal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); setEditingTransaction(null); }} onSuccess={fetchData} initialData={editingTransaction} />
+      <TransactionModal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); setEditingTransaction(null); }} initialData={editingTransaction} />
     </div>
   );
 };

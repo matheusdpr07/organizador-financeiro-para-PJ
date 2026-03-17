@@ -41,17 +41,6 @@ const ServiceOrderModal = ({ isOpen, onClose, onSuccess }: any) => {
     }
   }, [isOpen]);
 
-  const handleProductSelect = (productId: string) => {
-    const product: any = products.find((p: any) => p.id === productId);
-    if (product) {
-      setNewItem({
-        ...newItem,
-        description: product.name,
-        unitPrice: product.salePrice,
-        type: 'PART'
-      });
-    }
-  };
 
   const addItem = () => {
     if (!newItem.description || newItem.unitPrice <= 0) return;
@@ -158,27 +147,32 @@ const ServiceOrderModal = ({ isOpen, onClose, onSuccess }: any) => {
                   </button>
                 </div>
 
-                {/* Busca de Peça (Apenas se for PART) ou Descrição Manual */}
+                {/* Campo de Descrição Unificado com Sugestões */}
                 <div className="md:col-span-5">
-                  {newItem.type === 'PART' ? (
-                    <select
-                      className="w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:border-emerald-500 text-[13px] font-bold text-slate-900 shadow-sm"
-                      onChange={e => handleProductSelect(e.target.value)}
-                      value=""
-                    >
-                      <option value="">Buscar peça no estoque...</option>
-                      {products.map((p: any) => (
-                        <option key={p.id} value={p.id}>{p.name} (Saldo: {p.quantity})</option>
-                      ))}
-                    </select>
-                  ) : (
-                    <input
-                      className="w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:border-brand-600 text-[13px] font-bold text-slate-900 shadow-sm"
-                      placeholder="Descrição do serviço..."
-                      value={newItem.description}
-                      onChange={e => setNewItem({ ...newItem, description: e.target.value })}
-                    />
-                  )}
+                  <input
+                    className={`w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl focus:outline-none text-[13px] font-bold text-slate-900 shadow-sm ${newItem.type === 'PART' ? 'focus:border-emerald-500' : 'focus:border-brand-600'}`}
+                    placeholder={newItem.type === 'PART' ? "Nome da peça..." : "Descrição do serviço..."}
+                    value={newItem.description}
+                    list="product-suggestions"
+                    onChange={e => {
+                      const val = e.target.value;
+                      setNewItem(prev => {
+                        const updated = { ...prev, description: val };
+                        if (prev.type === 'PART') {
+                          const product: any = products.find((p: any) => p.name === val);
+                          if (product) {
+                            updated.unitPrice = product.salePrice;
+                          }
+                        }
+                        return updated;
+                      });
+                    }}
+                  />
+                  <datalist id="product-suggestions">
+                    {products.map((p: any) => (
+                      <option key={p.id} value={p.name} />
+                    ))}
+                  </datalist>
                 </div>
 
                 {/* Preço Unitário */}

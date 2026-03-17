@@ -23,6 +23,9 @@ app.use('/api/transactions', transactionRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/setup', setupRoutes);
 
+import { errorHandler } from './middlewares/errorMiddleware';
+app.use(errorHandler);
+
 app.get('/', (req, res) => {
   res.send('Finanças PJ API está rodando!');
 });

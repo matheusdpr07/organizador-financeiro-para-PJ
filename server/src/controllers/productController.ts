@@ -1,63 +1,39 @@
 import { Response } from 'express';
-import { PrismaClient } from '@prisma/client';
 import { AuthRequest } from '../middlewares/authMiddleware';
-
-const prisma = new PrismaClient();
+import productService from '../services/ProductService';
+import { z } from 'zod';
 
 export const getProducts = async (req: AuthRequest, res: Response) => {
   const { companyId } = req;
   try {
-    const products = await prisma.product.findMany({ 
-      where: { companyId },
-      orderBy: { name: 'asc' }
-    });
+    const products = await productService.getAll(companyId!);
     res.json(products);
   } catch (error) {
-    res.status(500).json({ error: 'Erro ao buscar estoque' });
+    res.status(500).json({ error: 'Erro ao buscar produtos' });
   }
 };
 
 export const createProduct = async (req: AuthRequest, res: Response) => {
-  const { name, sku, quantity, costPrice, salePrice } = req.body;
   const { companyId } = req;
-  if (!companyId) return res.status(400).json({ error: 'Empresa não identificada' });
-
   try {
-    const product = await prisma.product.create({
-      data: { 
-        name, 
-        sku, 
-        quantity: parseFloat(quantity) || 0, 
-        costPrice: parseFloat(costPrice) || 0, 
-        salePrice: parseFloat(salePrice) || 0, 
-        companyId 
-      }
-    });
+    const product = await productService.create({ ...req.body, companyId });
     res.status(201).json(product);
   } catch (error) {
-    res.status(500).json({ error: 'Erro ao cadastrar peça' });
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ errors: error.errors });
+    }
+    res.status(500).json({ error: 'Erro ao cadastrar produto' });
   }
 };
 
 export const updateProduct = async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
-  const { name, sku, quantity, costPrice, salePrice } = req.body;
   const { companyId } = req;
-
   try {
-    await prisma.product.updateMany({
-      where: { id, companyId },
-      data: { 
-        name, 
-        sku, 
-        quantity: parseFloat(quantity), 
-        costPrice: parseFloat(costPrice), 
-        salePrice: parseFloat(salePrice) 
-      }
-    });
-    res.json({ message: 'Peça atualizada' });
+    const result = await productService.update(id, companyId!, req.body);
+    res.json(result);
   } catch (error) {
-    res.status(500).json({ error: 'Erro ao editar peça' });
+    res.status(500).json({ error: 'Erro ao editar produto' });
   }
 };
 
@@ -65,9 +41,9 @@ export const deleteProduct = async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
   const { companyId } = req;
   try {
-    await prisma.product.deleteMany({ where: { id, companyId } });
-    res.json({ message: 'Peça excluída' });
+    await productService.delete(id, companyId!);
+    res.json({ message: 'Produto excluído' });
   } catch (error) {
-    res.status(500).json({ error: 'Erro ao excluir peça' });
+    res.status(500).json({ error: 'Erro ao excluir produto' });
   }
 };

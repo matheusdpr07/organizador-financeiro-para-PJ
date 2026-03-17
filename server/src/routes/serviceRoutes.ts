@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { 
   getClients, createClient, updateClient, deleteClient,
-  getServiceOrders, createServiceOrder, finalizeOS 
+  getServiceOrders, createServiceOrder, finalizeOS, deleteServiceOrder, deleteManyServiceOrders
 } from '../controllers/serviceController';
 import { authMiddleware } from '../middlewares/authMiddleware';
 
@@ -19,5 +19,7 @@ router.delete('/clients/:id', deleteClient);
 router.get('/orders', getServiceOrders);
 router.post('/orders', createServiceOrder);
 router.patch('/orders/:id/finalize', finalizeOS);
+router.delete('/orders/:id', deleteServiceOrder); // Exclusão individual
+router.delete('/orders', deleteManyServiceOrders); // Exclusão em lote
 
 export default router;

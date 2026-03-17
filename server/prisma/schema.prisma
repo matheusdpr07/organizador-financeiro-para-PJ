@@ -47,6 +47,8 @@ model Product {
   company      Company  @relation(fields: [companyId], references: [id])
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+
+  @@index([companyId])
 }
 
 model Client {
@@ -62,6 +64,8 @@ model Client {
   serviceOrders ServiceOrder[]
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
+
+  @@index([companyId])
 }
 
 model ServiceOrder {
@@ -76,6 +80,9 @@ model ServiceOrder {
   items        ServiceItem[]
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
+
+  @@index([companyId])
+  @@index([clientId])
 }
 
 model ServiceItem {
@@ -89,6 +96,8 @@ model ServiceItem {
   serviceOrder   ServiceOrder @relation(fields: [serviceOrderId], references: [id])
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
+
+  @@index([serviceOrderId])
 }
 
 model Asset {
@@ -101,6 +110,8 @@ model Asset {
   company      Company       @relation(fields: [companyId], references: [id])
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
+
+  @@index([companyId])
 }
 
 model RecurringTransaction {
@@ -115,6 +126,8 @@ model RecurringTransaction {
   company       Company  @relation(fields: [companyId], references: [id])
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+
+  @@index([companyId])
 }
 
 model Category {
@@ -130,6 +143,8 @@ model Category {
   transactions     Transaction[]
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
+
+  @@index([companyId])
 }
 
 model CostCenter {
@@ -140,6 +155,8 @@ model CostCenter {
   transactions Transaction[]
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
+
+  @@index([companyId])
 }
 
 model Transaction {
@@ -159,6 +176,10 @@ model Transaction {
   dueDate       DateTime?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+
+  @@index([companyId])
+  @@index([categoryId])
+  @@index([date])
 }
 
 model Goal {
@@ -172,4 +193,6 @@ model Goal {
   company     Company  @relation(fields: [companyId], references: [id])
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  @@index([companyId])
 }
