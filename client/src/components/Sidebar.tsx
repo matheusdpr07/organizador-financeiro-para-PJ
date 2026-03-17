@@ -38,7 +38,7 @@ const Sidebar = () => {
       <div className="p-6">
         <div className="flex items-center gap-3 text-brand-600">
           <div className="p-2 bg-brand-600 rounded-xl text-white shadow-lg shadow-brand-100">
-            <Wallet size={22} weight="bold" />
+            <Wallet size={22} />
           </div>
           <span className="text-lg font-black text-slate-900 tracking-tight">Finanças PJ</span>
         </div>

@@ -4,7 +4,7 @@ import { formatCurrency, formatDate } from './formatters';
 
 export const generateServiceReceipt = (os: any, companyName: string) => {
   const doc = new jsPDF();
-  const brandColor = [79, 70, 229]; // Indigo 600
+  const brandColor: [number, number, number] = [79, 70, 229]; // Indigo 600
 
   // --- 1. CABEÇALHO ---
   doc.setFillColor(brandColor[0], brandColor[1], brandColor[2]);

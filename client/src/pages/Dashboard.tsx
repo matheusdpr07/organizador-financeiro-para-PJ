@@ -41,8 +41,8 @@ const Dashboard = () => {
 
   // Memoização de cálculos para performance
   const stats = useMemo(() => {
-    const income = transactions.filter(t => t.type === 'INCOME' && t.status === 'PAID').reduce((acc, t) => acc + t.amount, 0);
-    const expense = transactions.filter(t => t.type === 'EXPENSE' && t.status === 'PAID').reduce((acc, t) => acc + t.amount, 0);
+    const income = transactions.filter((t: Transaction) => t.type === 'INCOME' && t.status === 'PAID').reduce((acc: number, t: Transaction) => acc + t.amount, 0);
+    const expense = transactions.filter((t: Transaction) => t.type === 'EXPENSE' && t.status === 'PAID').reduce((acc: number, t: Transaction) => acc + t.amount, 0);
     return {
       totalIncome: income,
       totalExpense: expense,
@@ -149,7 +149,7 @@ const Dashboard = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {transactions.slice(0, 15).map((t) => (
+              {transactions.slice(0, 15).map((t: Transaction) => (
                 <tr key={t.id} className="hover:bg-slate-50/30 transition-colors group">
                   <td className="px-8 py-5">
                     <div className="flex flex-col">
@@ -179,7 +179,12 @@ const Dashboard = () => {
         </div>
       </div>
 
-      <TransactionModal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); setEditingTransaction(null); }} initialData={editingTransaction} />
+      <TransactionModal 
+        isOpen={isModalOpen} 
+        onClose={() => { setIsModalOpen(false); setEditingTransaction(null); }} 
+        onSuccess={() => {}} 
+        initialData={editingTransaction} 
+      />
     </div>
   );
 };
