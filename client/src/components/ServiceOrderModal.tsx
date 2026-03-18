@@ -4,21 +4,28 @@ import api from '../services/api';
 import { formatCurrency } from '../utils/formatters';
 import ClientModal from './ClientModal';
 
-const ServiceOrderModal = ({ isOpen, onClose, onSuccess }: any) => {
+interface ServiceOrderModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSuccess: () => void;
+}
+
+const ServiceOrderModal = ({ isOpen, onClose, onSuccess }: ServiceOrderModalProps) => {
   const [clients, setClients] = useState([]);
   const [products, setProducts] = useState([]);
   const [isClientModalOpen, setIsClientModalOpen] = useState(false);
+  
   const [formData, setFormData] = useState({
     clientId: '',
     description: '',
     items: [] as any[]
   });
-  
-  const [newItem, setNewItem] = useState({ 
-    description: '', 
-    quantity: 1, 
-    unitPrice: 0, 
-    type: 'SERVICE' as 'SERVICE' | 'PART' 
+
+  const [newItem, setNewItem] = useState({
+    description: '',
+    quantity: 1,
+    unitPrice: 0,
+    type: 'SERVICE' as 'SERVICE' | 'PART'
   });
 
   const fetchData = async () => {
@@ -30,28 +37,28 @@ const ServiceOrderModal = ({ isOpen, onClose, onSuccess }: any) => {
       setClients(clientsRes.data);
       setProducts(productsRes.data);
     } catch (err) {
-      console.error("Erro ao carregar dados para OS:", err);
+      console.error(err);
     }
   };
 
   useEffect(() => {
-    if (isOpen) {
-      fetchData();
-      setFormData({ clientId: '', description: '', items: [] });
-    }
+    if (isOpen) fetchData();
   }, [isOpen]);
-
 
   const addItem = () => {
     if (!newItem.description || newItem.unitPrice <= 0) return;
-    setFormData({ ...formData, items: [...formData.items, newItem] });
-    setNewItem({ description: '', quantity: 1, unitPrice: 0, type: newItem.type });
+    setFormData({
+      ...formData,
+      items: [...formData.items, { ...newItem, totalPrice: newItem.quantity * newItem.unitPrice }]
+    });
+    setNewItem({ description: '', quantity: 1, unitPrice: 0, type: 'SERVICE' });
   };
 
   const removeItem = (index: number) => {
-    const newItems = [...formData.items];
-    newItems.splice(index, 1);
-    setFormData({ ...formData, items: newItems });
+    setFormData({
+      ...formData,
+      items: formData.items.filter((_, i) => i !== index)
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -60,97 +67,99 @@ const ServiceOrderModal = ({ isOpen, onClose, onSuccess }: any) => {
       alert("Selecione um cliente e adicione pelo menos um item.");
       return;
     }
+
     try {
       await api.post('/services/orders', formData);
       onSuccess();
       onClose();
+      setFormData({ clientId: '', description: '', items: [] });
     } catch (err) {
       alert("Erro ao criar Ordem de Serviço");
     }
   };
 
-  if (!isOpen) return null;
+  const totalOS = formData.items.reduce((acc, item) => acc + item.totalPrice, 0);
 
-  const total = formData.items.reduce((acc, item) => acc + (item.quantity * item.unitPrice), 0);
+  if (!isOpen) return null;
 
   return (
     <>
-      <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div className="bg-white w-full max-w-4xl rounded-[40px] shadow-2xl overflow-hidden border border-slate-100 max-h-[95vh] flex flex-col animate-in fade-in zoom-in duration-200">
-          <header className="p-8 border-b border-slate-50 flex items-center justify-between bg-white sticky top-0 z-10">
+      <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div className="bg-white dark:bg-slate-900 w-full max-w-4xl rounded-[40px] shadow-2xl overflow-hidden border border-slate-100 dark:border-slate-800 flex flex-col max-h-[90vh] transition-colors duration-300">
+          <header className="p-8 border-b border-slate-50 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900 sticky top-0 z-10">
             <div>
-              <h2 className="text-2xl font-black text-slate-900 tracking-tight">Nova Ordem de Serviço</h2>
-              <p className="text-slate-500 text-sm font-medium">Gestão completa de peças e mão de obra.</p>
+              <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-3">
+                <Wrench className="text-brand-600" size={28} />
+                Nova Ordem de Serviço
+              </h2>
+              <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">Registre serviços e peças aplicadas ao veículo/cliente.</p>
             </div>
-            <button onClick={onClose} className="p-2.5 hover:bg-slate-50 rounded-2xl text-slate-400 transition-colors">
+            <button onClick={onClose} className="p-3 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-2xl text-slate-400 transition-colors">
               <X size={24} />
             </button>
           </header>
 
-          <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-8 space-y-10">
-            {/* Seção Cliente */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between px-1">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Identificação do Cliente</label>
-                <button 
-                  type="button" 
-                  onClick={() => setIsClientModalOpen(true)}
-                  className="flex items-center gap-1.5 text-brand-600 font-black text-[10px] uppercase hover:text-brand-700 transition-colors"
-                >
-                  <UserPlus size={14} /> Cadastrar Novo
-                </button>
-              </div>
-              <select
-                required
-                className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-3xl focus:outline-none focus:ring-4 focus:ring-brand-600/10 focus:border-brand-600 transition-all text-sm font-bold text-slate-900"
-                value={formData.clientId}
-                onChange={e => setFormData({ ...formData, clientId: e.target.value })}
-              >
-                <option value="">Selecione o Cliente na base de dados...</option>
-                {clients.map((c: any) => (
-                  <option key={c.id} value={c.id}>{c.name} {c.observation ? `(${c.observation})` : ''}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Seção Problema */}
-            <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 px-1">Relato do Problema / Observações</label>
-              <textarea
-                className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-3xl focus:outline-none focus:ring-4 focus:ring-brand-600/10 focus:border-brand-600 transition-all text-sm font-medium text-slate-900 h-20 resize-none"
-                placeholder="Ex: Cliente relata barulho na suspensão dianteira..."
-                value={formData.description}
-                onChange={e => setFormData({ ...formData, description: e.target.value })}
-              />
-            </div>
-
-            {/* Seção Itens Inteligente */}
-            <div className="space-y-6 bg-slate-50/50 p-6 rounded-[32px] border border-slate-100">
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-1">Lançamento de Itens</label>
-              
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-                {/* Tipo de Item */}
-                <div className="md:col-span-3 flex bg-white p-1 rounded-2xl border border-slate-200 shadow-sm">
-                  <button
-                    type="button"
-                    onClick={() => setNewItem({ ...newItem, type: 'SERVICE' })}
-                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-[10px] font-black uppercase transition-all ${newItem.type === 'SERVICE' ? 'bg-brand-600 text-white shadow-lg shadow-brand-100' : 'text-slate-400 hover:text-slate-600'}`}
+          <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-8 space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {/* Seleção de Cliente */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between px-1">
+                  <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Cliente / Veículo</label>
+                  <button 
+                    type="button" 
+                    onClick={() => setIsClientModalOpen(true)}
+                    className="text-[10px] font-black text-brand-600 dark:text-brand-400 uppercase flex items-center gap-1 hover:underline"
                   >
-                    <Wrench size={14} /> Serviço
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setNewItem({ ...newItem, type: 'PART' })}
-                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-[10px] font-black uppercase transition-all ${newItem.type === 'PART' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-100' : 'text-slate-400 hover:text-slate-600'}`}
-                  >
-                    <Package size={14} /> Peça
+                    <UserPlus size={12} /> Novo Cliente
                   </button>
                 </div>
+                <select
+                  required
+                  className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:outline-none focus:ring-4 focus:ring-brand-600/10 focus:border-brand-600 transition-all text-slate-900 dark:text-white font-bold cursor-pointer"
+                  value={formData.clientId}
+                  onChange={e => setFormData({ ...formData, clientId: e.target.value })}
+                >
+                  <option value="">Selecione o cliente...</option>
+                  {clients.map((c: any) => (
+                    <option key={c.id} value={c.id}>{c.name} ({c.observation || 'Sem veículo'})</option>
+                  ))}
+                </select>
+              </div>
 
-                {/* Campo de Descrição Unificado com Sugestões */}
+              {/* Observações Gerais */}
+              <div className="space-y-3">
+                <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-1">Observações Técnicas</label>
+                <input
+                  type="text"
+                  placeholder="Ex: Barulho na suspensão, Troca de óleo..."
+                  className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:outline-none focus:ring-4 focus:ring-brand-600/10 focus:border-brand-600 transition-all text-slate-900 dark:text-white font-bold"
+                  value={formData.description}
+                  onChange={e => setFormData({ ...formData, description: e.target.value })}
+                />
+              </div>
+            </div>
+
+            {/* Lançamento de Itens */}
+            <div className="bg-slate-50 dark:bg-slate-800/50 p-8 rounded-[32px] border border-slate-200 dark:border-slate-700 space-y-6">
+              <h3 className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-1">Adicionar Itens (Serviços e Peças)</h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+                {/* Tipo */}
+                <div className="md:col-span-2">
+                  <select
+                    className="w-full px-4 py-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl focus:outline-none focus:border-brand-600 text-xs font-black text-slate-900 dark:text-white"
+                    value={newItem.type}
+                    onChange={e => setNewItem({ ...newItem, type: e.target.value as 'SERVICE' | 'PART', description: '', unitPrice: 0 })}
+                  >
+                    <option value="SERVICE">SERVIÇO</option>
+                    <option value="PART">PEÇA</option>
+                  </select>
+                </div>
+
+                {/* Descrição */}
                 <div className="md:col-span-5">
                   <input
-                    className={`w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl focus:outline-none text-[13px] font-bold text-slate-900 shadow-sm ${newItem.type === 'PART' ? 'focus:border-emerald-500' : 'focus:border-brand-600'}`}
+                    className={`w-full px-4 py-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl focus:outline-none text-xs font-bold text-slate-900 dark:text-white placeholder:text-slate-300 dark:placeholder:text-slate-600 ${newItem.type === 'PART' ? 'focus:border-emerald-500' : 'focus:border-brand-600'}`}
                     placeholder={newItem.type === 'PART' ? "Nome da peça..." : "Descrição do serviço..."}
                     value={newItem.description}
                     list="product-suggestions"
@@ -175,58 +184,74 @@ const ServiceOrderModal = ({ isOpen, onClose, onSuccess }: any) => {
                   </datalist>
                 </div>
 
-                {/* Preço Unitário */}
+                {/* Qtd */}
                 <div className="md:col-span-2">
                   <input
                     type="number"
-                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:border-brand-600 text-[13px] font-black text-slate-900 shadow-sm text-center"
-                    placeholder="R$ 0,00"
-                    value={newItem.unitPrice || ''}
-                    onChange={e => setNewItem({ ...newItem, unitPrice: parseFloat(e.target.value) })}
+                    className="w-full px-4 py-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl focus:outline-none focus:border-brand-600 text-xs font-black text-slate-900 dark:text-white"
+                    placeholder="Qtd"
+                    value={newItem.quantity}
+                    onChange={e => setNewItem({ ...newItem, quantity: Number(e.target.value) })}
                   />
                 </div>
 
-                <button 
-                  type="button"
-                  onClick={addItem}
-                  className="md:col-span-2 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase hover:bg-black transition-all flex items-center justify-center gap-2 shadow-lg shadow-slate-200 active:scale-95"
-                >
-                  <Plus size={16} /> Adicionar
-                </button>
+                {/* Valor */}
+                <div className="md:col-span-2">
+                  <input
+                    type="number"
+                    className="w-full px-4 py-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl focus:outline-none focus:border-brand-600 text-xs font-black text-slate-900 dark:text-white"
+                    placeholder="Valor"
+                    value={newItem.unitPrice || ''}
+                    onChange={e => setNewItem({ ...newItem, unitPrice: Number(e.target.value) })}
+                  />
+                </div>
+
+                {/* Botão Add */}
+                <div className="md:col-span-1">
+                  <button
+                    type="button"
+                    onClick={addItem}
+                    className="w-full h-full aspect-square md:aspect-auto flex items-center justify-center bg-brand-600 text-white rounded-2xl hover:bg-brand-700 transition-all shadow-lg shadow-brand-100 dark:shadow-none"
+                  >
+                    <Plus size={24} />
+                  </button>
+                </div>
               </div>
 
-              {/* Tabela de Itens Lançados */}
-              <div className="bg-white border border-slate-100 rounded-3xl overflow-hidden shadow-sm">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-50/50">
+              {/* Tabela de Itens Adicionados */}
+              <div className="mt-6 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-700 overflow-hidden transition-colors">
+                <table className="w-full text-left">
+                  <thead className="bg-slate-50 dark:bg-slate-800 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
                     <tr>
-                      <th className="px-6 py-4 font-black text-slate-400 text-[9px] uppercase tracking-widest">Item / Descrição</th>
-                      <th className="px-6 py-4 font-black text-slate-400 text-[9px] uppercase tracking-widest text-center">Tipo</th>
-                      <th className="px-6 py-4 font-black text-slate-400 text-[9px] uppercase tracking-widest text-right">Qtd</th>
-                      <th className="px-6 py-4 font-black text-slate-400 text-[9px] uppercase tracking-widest text-right">Preço</th>
-                      <th className="px-6 py-4 font-black text-slate-400 text-[9px] uppercase tracking-widest text-center">Ação</th>
+                      <th className="px-6 py-4">Descrição</th>
+                      <th className="px-6 py-4 text-center">Tipo</th>
+                      <th className="px-6 py-4 text-center">Qtd</th>
+                      <th className="px-6 py-4 text-right">Total</th>
+                      <th className="px-6 py-4 text-center"></th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-50">
-                    {formData.items.map((item, index) => (
-                      <tr key={index} className="group hover:bg-slate-50/30 transition-colors">
-                        <td className="px-6 py-4 font-bold text-slate-700">{item.description}</td>
+                  <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
+                    {formData.items.map((item, idx) => (
+                      <tr key={idx} className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                        <td className="px-6 py-4">{item.description}</td>
                         <td className="px-6 py-4 text-center">
-                          <span className={`px-2 py-0.5 rounded-md font-black text-[8px] uppercase ${item.type === 'PART' ? 'bg-emerald-50 text-emerald-600' : 'bg-brand-50 text-brand-600'}`}>
+                          <span className={`px-2 py-0.5 rounded text-[9px] uppercase ${item.type === 'PART' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600' : 'bg-brand-50 dark:bg-brand-900/20 text-brand-600'}`}>
                             {item.type === 'PART' ? 'Peça' : 'Serviço'}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-right font-bold text-slate-500">{item.quantity}</td>
-                        <td className="px-6 py-4 text-right font-black text-slate-900">{formatCurrency(item.unitPrice)}</td>
+                        <td className="px-6 py-4 text-center">{item.quantity}</td>
+                        <td className="px-6 py-4 text-right font-black text-slate-900 dark:text-white">{formatCurrency(item.totalPrice)}</td>
                         <td className="px-6 py-4 text-center">
-                          <button onClick={() => removeItem(index)} className="p-2 text-slate-300 hover:text-rose-600 transition-colors">
-                            <Trash2 size={14} />
+                          <button onClick={() => removeItem(idx)} className="text-slate-300 dark:text-slate-600 hover:text-rose-600 transition-colors">
+                            <Trash2 size={16} />
                           </button>
                         </td>
                       </tr>
                     ))}
                     {formData.items.length === 0 && (
-                      <tr><td colSpan={5} className="px-6 py-12 text-center text-slate-300 italic font-medium">O orçamento está vazio. Adicione itens acima.</td></tr>
+                      <tr>
+                        <td colSpan={5} className="px-6 py-10 text-center text-slate-300 dark:text-slate-700 font-bold italic">Nenhum item adicionado ainda.</td>
+                      </tr>
                     )}
                   </tbody>
                 </table>
@@ -234,30 +259,32 @@ const ServiceOrderModal = ({ isOpen, onClose, onSuccess }: any) => {
             </div>
           </form>
 
-          <footer className="p-8 border-t border-slate-50 bg-white flex items-center justify-between sticky bottom-0">
+          <footer className="p-8 border-t border-slate-50 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between sticky bottom-0">
             <div>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Total do Orçamento</p>
-              <p className="text-4xl font-black text-slate-900 tracking-tighter">{formatCurrency(total)}</p>
+              <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">Total da Ordem de Serviço</p>
+              <p className="text-3xl font-black text-brand-600 dark:text-brand-400 tracking-tighter">{formatCurrency(totalOS)}</p>
             </div>
-            <div className="flex gap-3">
-              <button type="button" onClick={onClose} className="px-8 py-4 text-slate-500 font-bold hover:text-slate-900 transition-all text-sm">Cancelar</button>
+            <div className="flex gap-4">
+              <button type="button" onClick={onClose} className="px-8 py-4 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 font-black text-xs uppercase rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">
+                Cancelar
+              </button>
               <button 
+                type="button"
                 onClick={handleSubmit}
-                className="px-10 py-4 bg-brand-600 text-white font-black rounded-[20px] hover:bg-brand-700 shadow-xl shadow-brand-100 transition-all active:scale-95 flex items-center gap-3 text-sm"
+                className="px-10 py-4 bg-brand-600 text-white font-black text-xs uppercase rounded-2xl hover:bg-brand-700 shadow-xl shadow-brand-100 dark:shadow-none transition-all active:scale-95 flex items-center gap-2"
               >
-                <Save size={20} /> Salvar Ordem de Serviço
+                <Save size={20} /> Finalizar e Gerar OS
               </button>
             </div>
           </footer>
         </div>
       </div>
 
-      {/* Modal Aninhado de Cadastro de Cliente */}
       <ClientModal 
         isOpen={isClientModalOpen} 
         onClose={() => setIsClientModalOpen(false)} 
         onSuccess={() => {
-          fetchData(); // Recarrega a lista de clientes para incluir o novo
+          fetchData();
           setIsClientModalOpen(false);
         }} 
       />

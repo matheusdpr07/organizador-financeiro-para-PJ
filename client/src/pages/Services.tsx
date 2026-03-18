@@ -76,15 +76,15 @@ const Services = () => {
   if (loading) return <div className="p-8 flex justify-center"><div className="w-8 h-8 border-2 border-brand-600 border-t-transparent rounded-full animate-spin"></div></div>;
 
   return (
-    <div className="p-6 md:p-10 bg-slate-50/50 min-h-screen space-y-10">
+    <div className="p-6 md:p-10 bg-slate-50/50 dark:bg-slate-950 min-h-screen space-y-10 transition-colors duration-300">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <div className="flex items-center gap-2 text-brand-600 mb-2">
+          <div className="flex items-center gap-2 text-brand-600 dark:text-brand-400 mb-2">
             <Wrench size={16} />
             <span className="text-[10px] font-black uppercase tracking-widest">Oficina & Manutenção</span>
           </div>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight">Ordens de Serviço</h1>
-          <p className="text-slate-500 text-sm font-medium">Gerencie os trabalhos e emissões para seus clientes.</p>
+          <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Ordens de Serviço</h1>
+          <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">Gerencie os trabalhos e emissões para seus clientes.</p>
         </div>
         
         <div className="flex items-center gap-3">
@@ -98,7 +98,7 @@ const Services = () => {
           )}
           <button 
             onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 bg-brand-600 px-6 py-3 rounded-2xl hover:bg-brand-700 transition-all font-bold text-sm text-white shadow-xl shadow-brand-100 active:scale-95"
+            className="flex items-center gap-2 bg-brand-600 px-6 py-3 rounded-2xl hover:bg-brand-700 transition-all font-bold text-sm text-white shadow-xl shadow-brand-100 dark:shadow-none active:scale-95"
           >
             <Plus size={18} /> Nova OS
           </button>
@@ -107,21 +107,21 @@ const Services = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         {orders.map((os: any) => (
-          <div key={os.id} className="bg-white p-6 rounded-3xl shadow-card border border-slate-100 group hover:border-brand-100 transition-all flex flex-col justify-between">
+          <div key={os.id} className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-card border border-slate-100 dark:border-slate-800 group hover:border-brand-100 dark:hover:border-brand-900 transition-all flex flex-col justify-between transition-colors duration-300">
             <div>
               <div className="flex justify-between items-start mb-4">
                 <div className="flex items-center gap-3">
                   <input 
                     type="checkbox" 
-                    className="w-5 h-5 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+                    className="w-5 h-5 rounded border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-brand-600 focus:ring-brand-500"
                     checked={selectedOrders.includes(os.id)}
                     onChange={e => handleSelectOrder(os.id, e.target.checked)}
                   />
-                  <div className="p-2.5 bg-slate-50 text-slate-400 rounded-xl font-black text-xs uppercase">OS #{os.id}</div>
+                  <div className="p-2.5 bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500 rounded-xl font-black text-xs uppercase">OS #{os.id}</div>
                 </div>
                 <span className={`text-[10px] font-black px-2 py-1 rounded-lg uppercase ${
-                  os.status === 'OPEN' ? 'bg-amber-50 text-amber-600' : 
-                  os.status === 'PAID' ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-50 text-slate-500'
+                  os.status === 'OPEN' ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400' : 
+                  os.status === 'PAID' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400' : 'bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
                 }`}>
                   {os.status === 'OPEN' ? 'Aberta' : os.status === 'PAID' ? 'Finalizada' : os.status}
                 </span>
@@ -129,17 +129,17 @@ const Services = () => {
 
               <div className="space-y-4">
                 <div>
-                  <h3 className="text-slate-900 font-black text-lg truncate">{os.client.name}</h3>
-                  <p className="text-slate-400 text-xs font-bold uppercase tracking-wider">{os.client.observation || 'Sem veículo inf.'}</p>
+                  <h3 className="text-slate-900 dark:text-white font-black text-lg truncate">{os.client.name}</h3>
+                  <p className="text-slate-400 dark:text-slate-500 text-xs font-bold uppercase tracking-wider">{os.client.observation || 'Sem veículo inf.'}</p>
                 </div>
 
-                <div className="py-4 border-y border-slate-50 space-y-2">
-                  <p className="text-slate-500 text-[13px] font-medium leading-relaxed italic line-clamp-2">
+                <div className="py-4 border-y border-slate-50 dark:border-slate-800 space-y-2">
+                  <p className="text-slate-500 dark:text-slate-400 text-[13px] font-medium leading-relaxed italic line-clamp-2">
                     "{os.description || 'Nenhuma observação técnica descrita.'}"
                   </p>
                   <div className="flex justify-between items-center text-xs font-bold">
-                    <span className="text-slate-400">Total:</span>
-                    <span className="text-slate-900">{formatCurrency(os.totalAmount)}</span>
+                    <span className="text-slate-400 dark:text-slate-500">Total:</span>
+                    <span className="text-slate-900 dark:text-white">{formatCurrency(os.totalAmount)}</span>
                   </div>
                 </div>
               </div>
@@ -155,20 +155,20 @@ const Services = () => {
                 </button>
               )}
               {os.status === 'PAID' && (
-                <div className="flex-1 py-3 bg-emerald-50 text-emerald-600 rounded-xl text-[10px] font-black uppercase flex items-center justify-center gap-2 border border-emerald-100">
+                <div className="flex-1 py-3 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-xl text-[10px] font-black uppercase flex items-center justify-center gap-2 border border-emerald-100 dark:border-emerald-900/30">
                   <CheckCircle2 size={14} /> Recebido
                 </div>
               )}
               <button 
                 onClick={() => handlePrint(os)}
-                className="p-3 bg-slate-50 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-xl transition-all" 
+                className="p-3 bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500 hover:text-brand-600 dark:hover:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-900/20 rounded-xl transition-all" 
                 title="Gerar Recibo PDF"
               >
                 <FileText size={18} />
               </button>
               <button 
                 onClick={() => handleDeleteIndividual(os.id)}
-                className="p-3 bg-slate-50 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all" 
+                className="p-3 bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-all" 
                 title="Excluir OS"
               >
                 <Trash2 size={18} />
@@ -178,7 +178,7 @@ const Services = () => {
         ))}
 
         {orders.length === 0 && (
-          <div className="col-span-full py-20 bg-white rounded-[40px] border border-dashed border-slate-200 flex flex-col items-center justify-center text-slate-300 gap-4">
+          <div className="col-span-full py-20 bg-white dark:bg-slate-900 rounded-[40px] border border-dashed border-slate-200 dark:border-slate-800 flex flex-col items-center justify-center text-slate-300 dark:text-slate-700 gap-4 transition-colors duration-300">
             <Wrench size={48} />
             <p className="font-bold uppercase text-xs tracking-widest">Nenhuma OS em andamento</p>
           </div>

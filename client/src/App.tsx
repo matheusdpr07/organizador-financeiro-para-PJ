@@ -14,7 +14,7 @@ const ProtectedLayout = ({ children }: { children: React.ReactNode }) => {
   const { signed, loading } = useAuth();
 
   if (loading) return (
-    <div className="flex items-center justify-center min-h-screen bg-slate-50">
+    <div className="flex items-center justify-center min-h-screen bg-slate-50 dark:bg-slate-950">
       <div className="w-12 h-12 border-4 border-brand-600 border-t-transparent rounded-full animate-spin"></div>
     </div>
   );
@@ -22,7 +22,7 @@ const ProtectedLayout = ({ children }: { children: React.ReactNode }) => {
   if (!signed) return <Navigate to="/login" />;
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
       <Sidebar />
       <main className="flex-1 overflow-auto">
         {children}
