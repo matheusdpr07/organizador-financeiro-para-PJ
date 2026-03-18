@@ -12,3 +12,15 @@ export const useCashFlow = (month: number, year: number) => {
     },
   });
 };
+
+export const useDRE = (month: number, year: number) => {
+  return useQuery({
+    queryKey: ['dre', month, year],
+    queryFn: async () => {
+      const { data } = await api.get('/reports/dre', {
+        params: { month, year }
+      });
+      return data;
+    },
+  });
+};

@@ -1,41 +1,22 @@
-import React, { useEffect, useState } from 'react';
-import { FileText, TrendingUp, ArrowDown, ArrowUp, Info } from 'lucide-react';
-import api from '../services/api';
+import React, { useState } from 'react';
+import { FileText, TrendingUp, ArrowUp, Info, ChevronDown } from 'lucide-react';
 import { formatCurrency } from '../utils/formatters';
-
-interface DREData {
-  grossRevenue: number;
-  deductions: number;
-  netRevenue: number;
-  directCosts: number;
-  grossProfit: number;
-  operatingExpenses: number;
-  ebitda: number;
-  financialResult: number;
-  netProfit: number;
-}
+import { useDRE } from '../hooks/useReports';
 
 const DRE = () => {
-  const [dre, setDre] = useState<DREData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [month, setMonth] = useState(new Date().getMonth() + 1);
+  const [year, setYear] = useState(new Date().getFullYear());
 
-  const fetchDRE = async () => {
-    setLoading(true);
-    try {
-      const res = await api.get('/reports/dre', { 
-        params: { month: new Date().getMonth() + 1, year: new Date().getFullYear() } 
-      });
-      setDre(res.data);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data: dre, isLoading } = useDRE(month, year);
 
-  useEffect(() => { fetchDRE(); }, []);
+  const months = [
+    "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+    "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+  ];
 
-  if (loading) return (
+  const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i);
+
+  if (isLoading) return (
     <div className="flex items-center justify-center min-h-screen bg-slate-50/30">
       <div className="w-10 h-10 border-[3px] border-brand-600 border-t-transparent rounded-full animate-spin"></div>
     </div>
@@ -60,9 +41,32 @@ const DRE = () => {
           <p className="text-slate-500 text-sm font-medium">Demonstrativo de Resultados do Exercício (Padrão Contábil)</p>
         </div>
         
-        <div className="bg-white px-4 py-2 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-2">
-          <CalendarIcon className="text-slate-400" size={16} />
-          <span className="text-xs font-bold text-slate-600 uppercase">{new Date().toLocaleString('pt-BR', { month: 'long', year: 'numeric' })}</span>
+        <div className="flex gap-3">
+          <div className="relative group">
+            <select 
+              value={month}
+              onChange={(e) => setMonth(Number(e.target.value))}
+              className="appearance-none bg-white px-6 py-3 pr-12 rounded-2xl border border-slate-200 shadow-sm text-xs font-bold text-slate-700 focus:outline-none focus:border-brand-600 transition-all cursor-pointer"
+            >
+              {months.map((m, i) => (
+                <option key={i + 1} value={i + 1}>{m}</option>
+              ))}
+            </select>
+            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+          </div>
+
+          <div className="relative group">
+            <select 
+              value={year}
+              onChange={(e) => setYear(Number(e.target.value))}
+              className="appearance-none bg-white px-6 py-3 pr-12 rounded-2xl border border-slate-200 shadow-sm text-xs font-bold text-slate-700 focus:outline-none focus:border-brand-600 transition-all cursor-pointer"
+            >
+              {years.map(y => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
+            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+          </div>
         </div>
       </header>
 
@@ -159,9 +163,5 @@ const DRERow = ({ label, value, percent, type, indent, isMain, isSubtotal, highl
     </tr>
   );
 };
-
-const CalendarIcon = ({ className, size }: any) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-);
 
 export default DRE;

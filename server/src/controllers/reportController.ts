@@ -1,9 +1,6 @@
 import { Response } from 'express';
-import { PrismaClient } from '@prisma/client';
-import { startOfMonth, endOfMonth, eachDayOfInterval, format } from 'date-fns';
 import { AuthRequest } from '../middlewares/authMiddleware';
-
-const prisma = new PrismaClient();
+import reportService from '../services/ReportService';
 
 export const getDRE = async (req: AuthRequest, res: Response) => {
   const { month, year } = req.query;
@@ -13,42 +10,9 @@ export const getDRE = async (req: AuthRequest, res: Response) => {
     return res.status(400).json({ error: 'Parâmetros month e year são obrigatórios' });
   }
 
-  const startDate = startOfMonth(new Date(Number(year), Number(month) - 1));
-  const endDate = endOfMonth(startDate);
-
   try {
-    const transactions = await prisma.transaction.findMany({
-      where: {
-        companyId,
-        status: 'PAID',
-        date: { gte: startDate, lte: endDate },
-      },
-      include: { category: true },
-    });
-
-    const getSum = (nature: string) => 
-      transactions.filter(t => t.category.accountingNature === nature).reduce((acc, t) => acc + t.amount, 0);
-
-    const data = {
-      grossRevenue: getSum('REVENUE'),
-      deductions: getSum('DEDUCTION'),
-      directCosts: getSum('DIRECT_COST'),
-      operatingExpenses: getSum('OPERATING_EXPENSE'),
-      financialResult: getSum('FINANCIAL'), // Aqui pode ser positivo ou negativo
-    };
-
-    const netRevenue = data.grossRevenue - data.deductions;
-    const grossProfit = netRevenue - data.directCosts;
-    const ebitda = grossProfit - data.operatingExpenses;
-    const netProfit = ebitda - data.financialResult; // Simplificado
-
-    res.json({
-      ...data,
-      netRevenue,
-      grossProfit,
-      ebitda,
-      netProfit,
-    });
+    const data = await reportService.getDRE(companyId!, Number(month), Number(year));
+    res.json(data);
   } catch (error) {
     res.status(500).json({ error: 'Erro ao calcular DRE' });
   }
@@ -62,36 +26,9 @@ export const getCashFlow = async (req: AuthRequest, res: Response) => {
     return res.status(400).json({ error: 'Parâmetros month e year são obrigatórios' });
   }
 
-  const startDate = startOfMonth(new Date(Number(year), Number(month) - 1));
-  const endDate = endOfMonth(startDate);
-
   try {
-    const transactions = await prisma.transaction.findMany({
-      where: {
-        companyId,
-        date: { gte: startDate, lte: endDate },
-      },
-    });
-
-    const days = eachDayOfInterval({ start: startDate, end: endDate });
-    
-    const cashFlow = days.map(day => {
-      const dayTransactions = transactions.filter(t => 
-        format(new Date(t.date), 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd')
-      );
-      
-      const incomes = dayTransactions.filter(t => t.type === 'INCOME' && t.status === 'PAID').reduce((acc, t) => acc + t.amount, 0);
-      const expenses = dayTransactions.filter(t => t.type === 'EXPENSE' && t.status === 'PAID').reduce((acc, t) => acc + t.amount, 0);
-
-      return {
-        date: format(day, 'yyyy-MM-dd'),
-        incomes,
-        expenses,
-        balance: incomes - expenses,
-      };
-    });
-
-    res.json(cashFlow);
+    const data = await reportService.getCashFlow(companyId!, Number(month), Number(year));
+    res.json(data);
   } catch (error) {
     res.status(500).json({ error: 'Erro ao calcular Fluxo de Caixa' });
   }
