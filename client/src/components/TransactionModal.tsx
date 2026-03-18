@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { X, Save } from 'lucide-react';
 import api from '../services/api';
 import { useCreateTransaction } from '../hooks/useTransactions';
+import { formatCurrencyInput, parseCurrencyInput } from '../utils/formatters';
 
 interface Category {
   id: string;
@@ -62,12 +63,22 @@ const TransactionModal = ({ isOpen, onClose, onSuccess, initialData }: Transacti
       if (initialData) {
         setFormData({
           description: initialData.description,
-          amount: initialData.amount.toString(),
+          amount: formatCurrencyInput((initialData.amount * 100).toString()),
           date: new Date(initialData.date).toISOString().split('T')[0],
           type: initialData.type,
           categoryId: initialData.categoryId,
           costCenterId: initialData.costCenterId || '',
           status: initialData.status
+        });
+      } else {
+        setFormData({
+          description: '',
+          amount: '',
+          date: new Date().toISOString().split('T')[0],
+          type: 'EXPENSE',
+          categoryId: '',
+          costCenterId: '',
+          status: 'PAID'
         });
       }
     }
@@ -87,7 +98,7 @@ const TransactionModal = ({ isOpen, onClose, onSuccess, initialData }: Transacti
     try {
       const payload = {
         ...formData,
-        amount: parseFloat(formData.amount)
+        amount: parseCurrencyInput(formData.amount)
       };
       
       if (initialData?.id) {
@@ -152,15 +163,14 @@ const TransactionModal = ({ isOpen, onClose, onSuccess, initialData }: Transacti
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2 px-1">Valor (R$)</label>
+                <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2 px-1">Valor do Lançamento</label>
                 <input
                   required
-                  type="number"
-                  step="0.01"
-                  placeholder="0,00"
+                  type="text"
+                  placeholder="R$ 0,00"
                   className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:outline-none focus:ring-4 focus:ring-brand-600/10 focus:border-brand-600 transition-all text-slate-900 dark:text-white font-black"
                   value={formData.amount}
-                  onChange={e => setFormData({ ...formData, amount: e.target.value })}
+                  onChange={e => setFormData({ ...formData, amount: formatCurrencyInput(e.target.value) })}
                 />
               </div>
               <div>

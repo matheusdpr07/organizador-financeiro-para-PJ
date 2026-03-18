@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { X, Save, Package, Hash, BarChart3, DollarSign, Tag } from 'lucide-react';
 import { useCreateProduct, useUpdateProduct } from '../hooks/useProducts';
+import { formatCurrencyInput, parseCurrencyInput } from '../utils/formatters';
 
 interface ProductModalProps {
   isOpen: boolean;
@@ -13,8 +14,8 @@ const ProductModal = ({ isOpen, onClose, initialData }: ProductModalProps) => {
     name: '',
     sku: '',
     quantity: 0,
-    costPrice: 0,
-    salePrice: 0
+    costPrice: '',
+    salePrice: ''
   });
 
   const createMutation = useCreateProduct();
@@ -27,16 +28,16 @@ const ProductModal = ({ isOpen, onClose, initialData }: ProductModalProps) => {
           name: initialData.name,
           sku: initialData.sku || '',
           quantity: initialData.quantity,
-          costPrice: initialData.costPrice,
-          salePrice: initialData.salePrice
+          costPrice: formatCurrencyInput((initialData.costPrice * 100).toString()),
+          salePrice: formatCurrencyInput((initialData.salePrice * 100).toString())
         });
       } else {
         setFormData({
           name: '',
           sku: '',
           quantity: 0,
-          costPrice: 0,
-          salePrice: 0
+          costPrice: '',
+          salePrice: ''
         });
       }
     }
@@ -44,10 +45,16 @@ const ProductModal = ({ isOpen, onClose, initialData }: ProductModalProps) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const payload = {
+      ...formData,
+      costPrice: parseCurrencyInput(formData.costPrice),
+      salePrice: parseCurrencyInput(formData.salePrice)
+    };
+
     if (initialData?.id) {
-      updateMutation.mutate({ id: initialData.id, ...formData });
+      updateMutation.mutate({ id: initialData.id, ...payload });
     } else {
-      createMutation.mutate(formData);
+      createMutation.mutate(payload);
     }
     onClose();
   };
@@ -122,11 +129,11 @@ const ProductModal = ({ isOpen, onClose, initialData }: ProductModalProps) => {
                   <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-brand-600 transition-colors" size={18} />
                   <input
                     required
-                    type="number"
-                    step="0.01"
+                    type="text"
+                    placeholder="R$ 0,00"
                     className="w-full pl-12 pr-5 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:outline-none focus:ring-4 focus:ring-brand-600/10 focus:border-brand-600 transition-all text-slate-900 dark:text-white font-bold"
                     value={formData.costPrice}
-                    onChange={e => setFormData({ ...formData, costPrice: Number(e.target.value) })}
+                    onChange={e => setFormData({ ...formData, costPrice: formatCurrencyInput(e.target.value) })}
                   />
                 </div>
               </div>
@@ -136,11 +143,11 @@ const ProductModal = ({ isOpen, onClose, initialData }: ProductModalProps) => {
                   <Tag className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-emerald-600 transition-colors" size={18} />
                   <input
                     required
-                    type="number"
-                    step="0.01"
+                    type="text"
+                    placeholder="R$ 0,00"
                     className="w-full pl-12 pr-5 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:outline-none focus:ring-4 focus:ring-emerald-600/10 focus:border-emerald-600 transition-all text-slate-900 dark:text-white font-black"
                     value={formData.salePrice}
-                    onChange={e => setFormData({ ...formData, salePrice: Number(e.target.value) })}
+                    onChange={e => setFormData({ ...formData, salePrice: formatCurrencyInput(e.target.value) })}
                   />
                 </div>
               </div>

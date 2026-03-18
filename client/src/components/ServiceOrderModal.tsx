@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { X, Save, Plus, Trash2, UserPlus, Search, Package, Wrench } from 'lucide-react';
 import api from '../services/api';
-import { formatCurrency } from '../utils/formatters';
+import { formatCurrency, formatCurrencyInput, parseCurrencyInput } from '../utils/formatters';
 import ClientModal from './ClientModal';
 
 interface ServiceOrderModalProps {
@@ -24,7 +24,7 @@ const ServiceOrderModal = ({ isOpen, onClose, onSuccess }: ServiceOrderModalProp
   const [newItem, setNewItem] = useState({
     description: '',
     quantity: 1,
-    unitPrice: 0,
+    unitPrice: '', // Agora como string para a máscara
     type: 'SERVICE' as 'SERVICE' | 'PART'
   });
 
@@ -46,12 +46,14 @@ const ServiceOrderModal = ({ isOpen, onClose, onSuccess }: ServiceOrderModalProp
   }, [isOpen]);
 
   const addItem = () => {
-    if (!newItem.description || newItem.unitPrice <= 0) return;
+    const price = parseCurrencyInput(newItem.unitPrice);
+    if (!newItem.description || price <= 0) return;
+    
     setFormData({
       ...formData,
-      items: [...formData.items, { ...newItem, totalPrice: newItem.quantity * newItem.unitPrice }]
+      items: [...formData.items, { ...newItem, unitPrice: price, totalPrice: newItem.quantity * price }]
     });
-    setNewItem({ description: '', quantity: 1, unitPrice: 0, type: 'SERVICE' });
+    setNewItem({ description: '', quantity: 1, unitPrice: '', type: 'SERVICE' });
   };
 
   const removeItem = (index: number) => {
@@ -149,7 +151,7 @@ const ServiceOrderModal = ({ isOpen, onClose, onSuccess }: ServiceOrderModalProp
                   <select
                     className="w-full px-4 py-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl focus:outline-none focus:border-brand-600 text-xs font-black text-slate-900 dark:text-white"
                     value={newItem.type}
-                    onChange={e => setNewItem({ ...newItem, type: e.target.value as 'SERVICE' | 'PART', description: '', unitPrice: 0 })}
+                    onChange={e => setNewItem({ ...newItem, type: e.target.value as 'SERVICE' | 'PART', description: '', unitPrice: '' })}
                   >
                     <option value="SERVICE">SERVIÇO</option>
                     <option value="PART">PEÇA</option>
@@ -170,7 +172,7 @@ const ServiceOrderModal = ({ isOpen, onClose, onSuccess }: ServiceOrderModalProp
                         if (prev.type === 'PART') {
                           const product: any = products.find((p: any) => p.name === val);
                           if (product) {
-                            updated.unitPrice = product.salePrice;
+                            updated.unitPrice = formatCurrencyInput((product.salePrice * 100).toString());
                           }
                         }
                         return updated;
@@ -190,19 +192,25 @@ const ServiceOrderModal = ({ isOpen, onClose, onSuccess }: ServiceOrderModalProp
                     type="number"
                     className="w-full px-4 py-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl focus:outline-none focus:border-brand-600 text-xs font-black text-slate-900 dark:text-white"
                     placeholder="Qtd"
-                    value={newItem.quantity}
-                    onChange={e => setNewItem({ ...newItem, quantity: Number(e.target.value) })}
+                    value={newItem.quantity === 0 ? '' : newItem.quantity}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setNewItem({ ...newItem, quantity: val === '' ? 0 : Number(val) });
+                    }}
                   />
                 </div>
 
                 {/* Valor */}
                 <div className="md:col-span-2">
                   <input
-                    type="number"
+                    type="text"
                     className="w-full px-4 py-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl focus:outline-none focus:border-brand-600 text-xs font-black text-slate-900 dark:text-white"
                     placeholder="Valor"
-                    value={newItem.unitPrice || ''}
-                    onChange={e => setNewItem({ ...newItem, unitPrice: Number(e.target.value) })}
+                    value={newItem.unitPrice}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setNewItem({ ...newItem, unitPrice: formatCurrencyInput(val) });
+                    }}
                   />
                 </div>
 
