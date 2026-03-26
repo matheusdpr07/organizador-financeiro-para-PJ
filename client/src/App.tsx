@@ -22,10 +22,12 @@ const ProtectedLayout = ({ children }: { children: React.ReactNode }) => {
   if (!signed) return <Navigate to="/login" />;
 
   return (
-    <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
+    <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950 transition-all duration-500">
       <Sidebar />
-      <main className="flex-1 overflow-auto">
-        {children}
+      <main className="flex-1 overflow-x-hidden overflow-y-auto transition-all duration-500">
+        <div className="container-fluid mx-auto">
+          {children}
+        </div>
       </main>
     </div>
   );
