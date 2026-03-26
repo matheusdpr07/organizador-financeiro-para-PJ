@@ -37,6 +37,8 @@ const Sidebar = () => {
     { icon: Target, label: 'Metas', path: '/goals' },
   ];
 
+  const activeIndex = menuItems.findIndex(item => location.pathname === item.path);
+
   return (
     <div className="w-64 bg-white dark:bg-slate-900 border-r border-slate-100 dark:border-slate-800 min-h-screen flex flex-col sticky top-0 h-screen overflow-hidden transition-colors duration-300">
       <div className="p-6 flex items-center justify-between">
@@ -58,23 +60,26 @@ const Sidebar = () => {
 
       <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
         <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest px-2 mb-4">Oficina & Loja</p>
+        
         {menuItems.map((item) => {
           const isActive = location.pathname === item.path;
           return (
             <Link
               key={item.path}
               to={item.path}
-              className={`flex items-center justify-between group px-3 py-2.5 rounded-xl transition-all duration-200 ${
+              className={`flex items-center justify-between group px-3 py-2.5 rounded-xl transition-all duration-300 ease-in-out ${
                 isActive 
-                  ? 'bg-brand-50 dark:bg-brand-900/20 text-brand-600 dark:text-brand-400 shadow-sm shadow-brand-50/50' 
-                  : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200'
+                  ? 'bg-brand-50 dark:bg-brand-900/20 text-brand-600 dark:text-brand-400 shadow-sm shadow-brand-50/20' 
+                  : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-slate-200'
               }`}
             >
               <div className="flex items-center gap-3">
-                <item.icon size={18} className={isActive ? 'text-brand-600 dark:text-brand-400' : 'text-slate-400 dark:text-slate-500 group-hover:text-brand-600 dark:group-hover:text-brand-400'} />
+                <item.icon size={18} className={`transition-colors duration-300 ${isActive ? 'text-brand-600 dark:text-brand-400' : 'text-slate-400 dark:text-slate-500 group-hover:text-brand-600 dark:group-hover:text-brand-400'}`} />
                 <span className="text-[13px] font-bold">{item.label}</span>
               </div>
-              {isActive && <div className="w-1 h-4 bg-brand-600 dark:bg-brand-400 rounded-full"></div>}
+              
+              {/* Indicador Lateral Suave */}
+              <div className={`w-1 h-4 bg-brand-600 dark:bg-brand-400 rounded-full transition-all duration-500 ${isActive ? 'opacity-100 scale-y-100' : 'opacity-0 scale-y-0'}`}></div>
             </Link>
           );
         })}
