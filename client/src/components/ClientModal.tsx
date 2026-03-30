@@ -141,13 +141,13 @@ const ClientModal = ({ isOpen, onClose, initialData }: ClientModalProps) => {
             </div>
 
             <div className="md:col-span-2">
-              <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2 px-1">Observação / Veículo (Placa)</label>
+              <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2 px-1">Dados do Veículo (Marca, Modelo, Placa)</label>
               <div className="relative group">
                 <Tag className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-brand-600 transition-colors" size={20} />
                 <input
                   type="text"
-                  placeholder="Ex: Toyota Corolla - BRA2E19"
-                  className="w-full pl-12 pr-5 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:outline-none focus:ring-4 focus:ring-brand-600/10 focus:border-brand-600 transition-all text-slate-900 dark:text-white font-bold"
+                  placeholder="Ex: Toyota Corolla - Prata - Placa ABC-1234"
+                  className="w-full pl-12 pr-5 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:outline-none focus:ring-4 focus:ring-brand-600/10 focus:border-brand-600 transition-all text-slate-900 dark:text-white font-bold placeholder:text-slate-300 dark:placeholder:text-slate-600"
                   value={formData.observation}
                   onChange={e => setFormData({ ...formData, observation: e.target.value })}
                 />

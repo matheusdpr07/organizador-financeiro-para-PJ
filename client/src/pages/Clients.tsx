@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Users, Plus, Edit2, Trash2, Search, Phone, Mail, MapPin } from 'lucide-react';
+import { Users, Plus, Edit2, Trash2, Search, Phone, Mail, MapPin, Car } from 'lucide-react';
 import ClientModal from '../components/ClientModal';
 import { useClients, useDeleteClient } from '../hooks/useClients';
 import { Client } from '../types';
@@ -93,8 +93,11 @@ const Clients = () => {
 
             {client.observation && (
               <div className="mt-6 pt-6 border-t border-slate-50 dark:border-slate-800">
-                <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">Observação / Veículo</p>
-                <p className="text-xs text-slate-600 dark:text-slate-300 font-bold">{client.observation}</p>
+                <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                  <Car size={12} className="text-brand-600 dark:text-brand-400" />
+                  Veículo / Placa
+                </p>
+                <p className="text-xs text-slate-600 dark:text-slate-300 font-bold bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-100 dark:border-slate-700/50">{client.observation}</p>
               </div>
             )}
           </div>
