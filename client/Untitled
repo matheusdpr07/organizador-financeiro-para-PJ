@@ -1,0 +1,31 @@
+Context:
+I am building a workshop (car repair shop) system. I want a feature where, when registering a vehicle, the user enters the license plate and the system automatically fetches vehicle data like brand, model, and year.
+
+Important constraints:
+- Must use FREE APIs available in Brazil (no paid services)
+- Do NOT include owner personal data (LGPD compliant)
+- Focus only on vehicle data (brand, model, year, color if possible)
+
+Goal:
+Create a simple and efficient system where:
+- The user inputs a license plate
+- The system fetches vehicle data from a free API
+- The data is returned and used to auto-fill the form
+
+Features required:
+1. Input field for license plate
+2. When the user finishes typing, trigger a request
+3. Call a free vehicle API using the plate
+4. Return structured data (JSON)
+5. Auto-fill fields:
+   - brand
+   - model
+   - year
+
+Extra (important for production):
+- Add basic error handling
+- Format plate input (uppercase, remove invalid characters)
+- Suggest caching results to avoid repeated API calls
+
+Output:
+Provide a complete working solution, clean and minimal, ready to use.

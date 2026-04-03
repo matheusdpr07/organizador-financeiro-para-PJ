@@ -7,6 +7,7 @@ import setupRoutes from './routes/setupRoutes';
 import authRoutes from './routes/authRoutes';
 import serviceRoutes from './routes/serviceRoutes';
 import inventoryRoutes from './routes/inventoryRoutes';
+import proxyRoutes from './routes/proxyRoutes';
 
 dotenv.config();
 
@@ -22,6 +23,7 @@ app.use('/api/inventory', inventoryRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/setup', setupRoutes);
+app.use('/api/proxy', proxyRoutes);
 
 import { errorHandler } from './middlewares/errorMiddleware';
 app.use(errorHandler);
